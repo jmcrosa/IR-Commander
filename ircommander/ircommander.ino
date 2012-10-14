@@ -27,15 +27,29 @@
 #define RESOLUTION 20 
 
 // What percent we will allow in variation to match the same code
-#define FUZZINESS 20
+#define FUZZINESS 35
 
 // we will store up to 100 pulse pairs (this is -a lot-)
 uint16_t pulses[NUMPULSES][2];  // pair is high and low pulse 
 uint8_t currentpulse = 0; // index for pulses we're storing
 
 #include "ircodes.h"
+#include <Servo.h> 
+//Servo setup
+Servo myServo;
+int Serv_val;
+
+void servCommand(int Dir) {
+  int _val = Dir; //myServo.read();// + Dir;
+  if (_val <0) _val = 0;
+  if (_val >180) _val = 180;
+  myServo.write(_val);
+}
 
 void setup(void) {
+  myServo.attach(9);
+  //myServo.write(180);
+  Serv_val = myServo.read();
   Serial.begin(9600);
   Serial.println("Ready to decode IR!");
 }
@@ -48,7 +62,17 @@ void loop(void) {
   Serial.print("Heard ");
   Serial.print(numberpulses);
   Serial.println("-pulse long IR signal");
-  if (IRcompare(numberpulses, ApplePlaySignal,sizeof(ApplePlaySignal)/4)) {
+  if ((IRcompare(numberpulses, HPUp_A,sizeof(HPUp_A)/4)) ||
+      (IRcompare(numberpulses, HPUp_B,sizeof(HPUp_B)/4)))  {
+    Serial.println("UP");
+    servCommand(170);
+  }
+  if ((IRcompare(numberpulses, HPDown_A,sizeof(HPDown_A)/4)) ||
+     (IRcompare(numberpulses, HPDown_B,sizeof(HPDown_B)/4))) {
+    Serial.println("Down");
+    servCommand(10);
+  }
+  /*if (IRcompare(numberpulses, ApplePlaySignal,sizeof(ApplePlaySignal)/4)) {
     Serial.println("PLAY");
   }
     if (IRcompare(numberpulses, AppleRewindSignal,sizeof(AppleRewindSignal)/4)) {
@@ -56,7 +80,7 @@ void loop(void) {
   }
     if (IRcompare(numberpulses, AppleForwardSignal,sizeof(AppleForwardSignal)/4)) {
     Serial.println("FORWARD");
-  }
+  }*/
   delay(500);
 }
 
@@ -182,4 +206,5 @@ void printpulses(void) {
   Serial.print(pulses[currentpulse-1][1] * RESOLUTION / 10, DEC);
   Serial.print(", 0};");
 }
+
 
